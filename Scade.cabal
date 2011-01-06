@@ -1,0 +1,14 @@
+Name:           language-scade
+Version:        0.1
+Author:         Henning Günther
+Cabal-Version:  >= 1.2
+Build-Type:     Simple
+
+Library
+  Build-Depends:        base,array,pretty
+  Exposed-Modules:
+    Language.Scade.Lexer
+    Language.Scade.Tokens
+    Language.Scade.Syntax
+    Language.Scade.Parser
+    Language.Scade.Pretty

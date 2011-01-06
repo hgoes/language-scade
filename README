@@ -1,0 +1,2 @@
+This is a SCADE parser and pretty printing library written in Haskell.
+SCADE is a modeling language used in the SCADE Suite by Esterel.
