@@ -71,6 +71,7 @@ prettyTypeExpr (TypeRecord xs) = braces $ commaList $ map (\(n,tp) -> text n <> 
 prettyExpr :: Int -> Expr -> Doc
 prettyExpr _ (IdExpr path) = prettyPath path
 prettyExpr _ (ConstIntExpr n) = integer n
+prettyExpr _ (ConstBoolExpr n) = if n then text "true" else text "false"
 prettyExpr p (IfExpr e1 e2 e3) = precedence 14 p $ 
                                  text "if" <+> prettyExpr 14 e1 <+>
                                  text "then" <+> prettyExpr 14 e2 <+>
@@ -88,7 +89,7 @@ prettyExpr _ (FBYExpr e1 e2 e3) = text "fby" <> (parens $
                                   prettyExpr 15 e2 <>
                                   text ";" <+>
                                   commaList (map (prettyExpr 15) e3))
-prettyExpr _ _ = text "_"
+prettyExpr _ _ = text "<expr>"
 
 opAttrs :: BinOp -> (Int,Doc)
 opAttrs BinPlus = (9,text "+")
@@ -97,6 +98,15 @@ opAttrs BinTimes = (8,text "*")
 opAttrs BinDiv = (8,text "/")
 opAttrs BinEquals = (10,text "=")
 opAttrs BinDifferent = (10,text "<>")
+opAttrs BinLesser = (10,text "<")
+opAttrs BinGreater = (10,text ">")
+opAttrs BinLessEq = (10,text "<=")
+opAttrs BinGreaterEq = (10,text ">=")
+opAttrs BinAfter = (13,text "->")
+opAttrs BinAnd = (11,text "and")
+opAttrs BinOr = (12,text "or")
+opAttrs BinXor = (12,text "xor")
+opAttrs BinPower = (2,text "^")
 opAttrs _ = (0,text "_")
 
 commaList :: [Doc] -> Doc
@@ -125,8 +135,53 @@ prettyEquation (SimpleEquation ids expr) = lhs <+> text "=" <+> rhs
   where
     lhs = hsep $ punctuate (text ",") $ map prettyLHSId ids
     rhs = prettyExpr 15 expr
+prettyEquation (StateEquation sm ret ret_all) = prettyStateMachine sm $+$
+                                                text "returns" <+> (hcat $ punctuate (text ",") $ map text ret ++ (if ret_all then [text ".."] else []))
 prettyEquation _ = text "<eq>"
 
 prettyLHSId :: LHSId -> Doc
 prettyLHSId (Named str) = text str
 prettyLHSId Bottom = text "_"
+
+prettyStateMachine :: StateMachine -> Doc
+prettyStateMachine (StateMachine name states)
+  = text "automaton" <+> (case name of
+                             Nothing -> empty
+                             Just rname -> text rname)
+    $+$ (nest 2 $ vcat $ map prettyState states)
+
+prettyState :: State -> Doc
+prettyState st = (if stateInitial st
+                  then text "initial"
+                  else empty) <+>
+                 (if stateFinal st
+                  then text "final"
+                  else empty) <+>
+                 text "state" <+>
+                 text (stateName st) $+$
+                 (nest 2 $ (case stateUnless st of
+                               [] -> empty
+                               _ -> text "unless" $+$ (nest 2 $ prettyTransitions (stateUnless st))) $+$
+                 (prettyDataDef (stateData st)) $+$
+                 (case stateUntil st of
+                     [] -> empty
+                     _ -> text "until" $+$ (nest 2 $ prettyTransitions (stateUntil st))))
+
+prettyTransitions :: [Transition] -> Doc
+prettyTransitions = vcat.fmap prettyTransition
+
+prettyTransition :: Transition -> Doc
+prettyTransition (Transition cond acts fork) = text "if" <+> prettyExpr 0 cond <+>
+                                               (case acts of
+                                                   Just racts -> prettyActions racts
+                                                   Nothing -> empty) <+>
+                                               (prettyFork fork) <> semi
+
+prettyActions :: Actions -> Doc
+prettyActions _ = text "<actions>"
+
+prettyFork :: Fork -> Doc
+prettyFork (TargetFork tp trg) = (case tp of
+                                     Restart -> text "restart"
+                                     Resume -> text "resume") <+> text trg
+prettyFork _ = text "<fork>"
