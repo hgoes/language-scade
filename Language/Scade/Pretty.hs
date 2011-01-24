@@ -82,7 +82,7 @@ prettyExpr p (BinaryExpr op e1 e2) = precedence prec p $
                                      prettyExpr prec e2
   where
     (prec,sym) = opAttrs op
---prettyExpr p (ApplyExpr op args) = 
+prettyExpr p (ApplyExpr op args) = prettyOperator op <> (parens $ commaList (map (prettyExpr 15) args))
 prettyExpr _ (FBYExpr e1 e2 e3) = text "fby" <> (parens $
                                   commaList (map (prettyExpr 15) e1) <>
                                   text ";" <+>
@@ -90,6 +90,12 @@ prettyExpr _ (FBYExpr e1 e2 e3) = text "fby" <> (parens $
                                   text ";" <+>
                                   commaList (map (prettyExpr 15) e3))
 prettyExpr _ _ = text "<expr>"
+
+prettyOperator :: Operator -> Doc
+prettyOperator (PrefixOp pref) = prettyPrefix pref
+
+prettyPrefix :: Prefix -> Doc
+prettyPrefix (PrefixPath path) = prettyPath path
 
 opAttrs :: BinOp -> (Int,Doc)
 opAttrs BinPlus = (9,text "+")
