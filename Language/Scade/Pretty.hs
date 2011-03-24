@@ -82,6 +82,9 @@ prettyExpr p (BinaryExpr op e1 e2) = precedence prec p $
                                      prettyExpr prec e2
   where
     (prec,sym) = opAttrs op
+prettyExpr p (UnaryExpr op e) = sym <+> prettyExpr prec e
+  where
+    (prec,sym) = unAttrs op
 prettyExpr p (ApplyExpr op args) = prettyOperator op <> (parens $ commaList (map (prettyExpr 15) args))
 prettyExpr _ (FBYExpr e1 e2 e3) = text "fby" <> (parens $
                                   commaList (map (prettyExpr 15) e1) <>
@@ -114,6 +117,13 @@ opAttrs BinOr = (12,text "or")
 opAttrs BinXor = (12,text "xor")
 opAttrs BinPower = (2,text "^")
 opAttrs _ = (0,text "_")
+
+unAttrs :: UnaryOp -> (Int,Doc) -- all the precendences are guessed, TODO: get the right ones
+unAttrs UnNot = (6,text "not")
+unAttrs UnPre = (7,text "pre")
+unAttrs UnNeg = (7,text "-")
+unAttrs UnCastInt = (7,text "int")
+unAttrs UnCastReal = (7,text "real")
 
 commaList :: [Doc] -> Doc
 commaList = hsep . punctuate (text ",")
