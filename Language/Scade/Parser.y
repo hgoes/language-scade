@@ -148,8 +148,9 @@ Declaration : open Path ';'     { OpenDecl $2 }
 TypeDecls : InterfaceStatus id TypeDefOpt ';' TypeDecls { (TypeDecl $1 $2 $3):$5 }
           |                                             { [] }
 
-TypeDefOpt : '=' TypeExpr            { Just (Left $2) }
-           | '=' enum '{' IdList '}' { Just (Right $4) }
+TypeDefOpt : '=' TypeExpr            { Just $2 }
+           | '=' enum '{' IdList '}' { Just (TypeEnum $4) }
+           |                         { Nothing }
 
 ConstDecls : ConstDecl ';' ConstDecls { $1:$3 }
            |                          { [] }

@@ -24,7 +24,7 @@ data UserOpKind = Function
 data ConstDecl = ConstDecl InterfaceStatus String TypeExpr (Maybe Expr)
                deriving Show
 
-data TypeDecl = TypeDecl InterfaceStatus String (Maybe (Either TypeExpr [String]))
+data TypeDecl = TypeDecl InterfaceStatus String (Maybe TypeExpr)
               deriving Show
 
 data InterfaceStatus = InterfaceStatus
@@ -60,6 +60,7 @@ data TypeExpr = TypeBool
               | TypePath Path
               | TypeVar String
               | TypeRecord [(String,TypeExpr)]
+              | TypeEnum [String]
               deriving (Show,Eq) -- missing: a whole shitload
 
 data DataDef = DataDef
