@@ -25,17 +25,21 @@ tokens :-
   automaton                                            { key KeyAutomaton }
   bool                                                 { key KeyBool }
   case                                                 { key KeyCase }
+  const                                                { key KeyConst }
   default                                              { key KeyDefault }
   div                                                  { key KeyDiv }
+  do                                                   { key KeyDo }
   else                                                 { key KeyElse }
   end                                                  { key KeyEnd }
   enum                                                 { key KeyEnum }
+  emit                                                 { key KeyEmit }
   every                                                { key KeyEvery }
   fby                                                  { key KeyFBY }
   flatten                                              { key KeyFlatten }
   fold                                                 { key KeyFold }
   foldi                                                { key KeyFoldi }
   foldw                                                { key KeyFoldw }
+  foldwi                                               { key KeyFoldwi }
   function                                             { key KeyFunction }
   guarantee                                            { key KeyGuarantee }
   if                                                   { key KeyIf }
@@ -47,6 +51,8 @@ tokens :-
   make                                                 { key KeyMake }
   map                                                  { key KeyMap }
   mapfold                                              { key KeyMapFold }
+  mapw                                                 { key KeyMapw }
+  mapwi                                                { key KeyMapwi }
   mod                                                  { key KeyMod }
   node                                                 { key KeyNode }
   not                                                  { key KeyNot }
@@ -63,13 +69,16 @@ tokens :-
   resume                                               { key KeyResume }
   returns                                              { key KeyReturns }
   reverse                                              { key KeyReverse }
+  sig                                                  { key KeySig }
   state                                                { key KeyState }
   tel                                                  { key KeyTel }
   then                                                 { key KeyThen }
+  times                                                { key KeyTimes }
   transpose                                            { key KeyTranspose }
   true                                                 { key KeyTrue }
   type                                                 { key KeyType }
   unless                                               { key KeyUnless }
+  until                                                { key KeyUntil }
   var                                                  { key KeyVar }
   when                                                 { key KeyWhen }
   where                                                { key KeyWhere }

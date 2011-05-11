@@ -14,11 +14,15 @@ data Declaration = OpenDecl Path
                    , userOpNumerics :: [String]
                    , userOpContent :: DataDef
                    }
+                 | ConstBlock [ConstDecl]
                  deriving Show
 
 data UserOpKind = Function
                 | Node
                 deriving Show
+
+data ConstDecl = ConstDecl InterfaceStatus String TypeExpr (Maybe Expr)
+               deriving Show
 
 data TypeDecl = TypeDecl InterfaceStatus String (Maybe (Either TypeExpr [String]))
               deriving Show
@@ -66,6 +70,7 @@ data DataDef = DataDef
 
 data Equation = SimpleEquation [LHSId] Expr
               | AssertEquation AssertType String Expr
+              | EmitEquation EmissionBody
               | StateEquation StateMachine [String] Bool
               | ClockedEquation (Maybe String) (Either IfBlock MatchBlock) [String] Bool
               deriving (Show,Eq)
@@ -83,6 +88,7 @@ data LHSId = Named String
 newtype Path = Path [String] deriving (Show,Eq)
 
 data Expr = IdExpr Path
+          | NameExpr String
           | LastExpr String
           | ConstIntExpr Integer
           | ConstBoolExpr Bool
@@ -102,6 +108,7 @@ data Expr = IdExpr Path
           | StaticProjectionExpr Expr Expr Expr
           | AppendExpr Expr Expr
           | TransposeExpr Expr Integer Integer
+          | TimesExpr Expr Expr
           deriving (Show,Eq)
 
 data ActivateCondition = ActivateClock ClockExpr
@@ -139,9 +146,13 @@ data Operator = PrefixOp Prefix
               | PrefixParamOp Prefix [Expr]
               | IteratorOp Iterator Operator Expr
               | ActivateOp Operator ActivateCondition
-              | FoldW Operator Expr Expr
               | Flatten Path
               | Make Path
+              | RestartOp Operator Expr
+              | MapWOp Operator Expr Expr Expr
+              | MapWiOp Operator Expr Expr Expr
+              | FoldWOp Operator Expr Expr
+              | FoldWiOp Operator Expr Expr
               deriving (Show,Eq)
 
 data Prefix = PrefixPath Path

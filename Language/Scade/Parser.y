@@ -54,6 +54,7 @@ import Language.Scade.Syntax
   case         { Key KeyCase }
   char         { Key KeyChar }
   clock        { Key KeyClock }
+  const        { Key KeyConst }
   default      { Key KeyDefault }
   div          { Key KeyDiv }
   do           { Key KeyDo }
@@ -70,6 +71,7 @@ import Language.Scade.Syntax
   fold         { Key KeyFold }
   foldi        { Key KeyFoldi }
   foldw        { Key KeyFoldw }
+  foldwi       { Key KeyFoldwi }
   guarantee    { Key KeyGuarantee }
   if           { Key KeyIf }
   imported     { Key KeyImported }
@@ -80,6 +82,8 @@ import Language.Scade.Syntax
   make         { Key KeyMake }
   map          { Key KeyMap }
   mapfold      { Key KeyMapFold }
+  mapw         { Key KeyMapw }
+  mapwi        { Key KeyMapwi }
   match        { Key KeyMatch }
   mod          { Key KeyMod }
   not            { Key KeyNot }
@@ -100,6 +104,7 @@ import Language.Scade.Syntax
   synchro      { Key KeySynchro }
   tel          { Key KeyTel }
   then         { Key KeyThen }
+  times        { Key KeyTimes }
   transpose    { Key KeyTranspose }
   true         { Key KeyTrue }
   type         { Key KeyType }
@@ -121,7 +126,7 @@ import Language.Scade.Syntax
 %left '=' '<>' '<' '>' '<=' '>='
 %left and or xor
 %left not
-%left pre
+%left pre times
 %left '+' '-'
 %left '*' '/' mod div
 %left '@'
@@ -136,6 +141,7 @@ Declarations : Declaration Declarations { $1:$2 }
 
 Declaration : open Path ';'     { OpenDecl $2 }
             | type TypeDecls    { TypeBlock $2 }
+            | const ConstDecls  { ConstBlock $2 }
             | PackageDecl       { $1 }
             | UserOpDeclaration { $1 }
 
@@ -144,6 +150,14 @@ TypeDecls : InterfaceStatus id TypeDefOpt ';' TypeDecls { (TypeDecl $1 $2 $3):$5
 
 TypeDefOpt : '=' TypeExpr            { Just (Left $2) }
            | '=' enum '{' IdList '}' { Just (Right $4) }
+
+ConstDecls : ConstDecl ';' ConstDecls { $1:$3 }
+           |                          { [] }
+
+ConstDecl : InterfaceStatus id ':' TypeExpr OptConstInit { ConstDecl $1 $2 $4 $5 }
+
+OptConstInit : '=' Expr { Just $2 }
+             |          { Nothing }
 
 UserOpDeclaration : OpKind Imported InterfaceStatus id SizeDecl 
                     '(' ParamList ')' returns '(' ParamList ')'
@@ -170,6 +184,7 @@ DataDef : Equation ';'                          { DataDef [] [] [$1] }
         | SignalBlock LocalBlockOpt LetBlockOpt { DataDef $1 $2 $3 }
         | LocalBlock LetBlockOpt                { DataDef [] $1 $2 }
         | LetBlock                              { DataDef [] [] $1 }
+        |                                       { DataDef [] [] [] }
 
 
 DataDefOpt : DataDef { $1 }
@@ -244,6 +259,7 @@ RecordEls : ',' id ':' TypeExpr RecordEls { ($2,$4):$5 }
 
 Equation : LHS '=' Expr               { SimpleEquation $1 $3 }
          | AssertType id ':' Expr     { AssertEquation $1 $2 $4 }
+         | emit EmissionBody          { EmitEquation $2 }
          | StateMachine Return        { let (xs,e) = $2 in StateEquation $1 xs e }
          | activate Id IfBlock Return { let (xs,e) = $4 in ClockedEquation $2 (Left $3) xs e }
 
@@ -267,6 +283,7 @@ LHSN : ',' LHSId LHSN { $2:$3 }
 LHSId : id { case $1 of { "_" -> Bottom ; _ -> Named $1 } }
 
 Expr : Path                                                { IdExpr $1 }
+     | name                                                { NameExpr $1 }
      | last name                                           { LastExpr $2 }
      | const_int                                           { ConstIntExpr $1 }
      | true                                                { ConstBoolExpr True }
@@ -307,6 +324,7 @@ Expr : Path                                                { IdExpr $1 }
      | Expr '[' Expr ']'                                   { IndexExpr $1 $3 }
      | Expr '[' Expr '..' Expr ']'                         { StaticProjectionExpr $1 $3 $5 }
      | Expr '@' Expr                                       { AppendExpr $1 $3 }
+     | Expr times Expr                                     { TimesExpr $1 $3 }
 
 Indices : '[' Expr ']' Indices { $2:$4 }
         |                      { [] }
@@ -345,11 +363,17 @@ ListN : ',' Expr ListN { $2:$3 }
 
 Operator : Prefix                                            { PrefixOp $1 }
          | '(' Prefix '<<' List '>>' ')'                     { PrefixParamOp $2 $4 }
+         | '(' make Path ')'                                 { Make $3 }
+         | '(' flatten Path ')'                              { Flatten $3 }
          | '(' Iterator Operator '<<' Expr '>>' ')'          { IteratorOp $2 $3 $5 }
          | '(' activate Operator every ActivateCondition ')' { ActivateOp $3 $5 }
-         | '(' foldw Operator '<<' Expr '>>' if Expr ')'     { FoldW $3 $5 $8 }
-         | '(' flatten Path ')'                              { Flatten $3 }
-         | '(' make Path ')'                                 { Make $3 }
+         | '(' restart Operator every Expr ')'               { RestartOp $3 $5 }
+         | '(' mapw Operator '<<' Expr '>>' if Expr default Expr ')' { MapWOp $3 $5 $8 $10 }
+         | '(' mapwi Operator '<<' Expr '>>' if Expr default Expr ')' { MapWiOp $3 $5 $8 $10 }
+         | '(' foldw Operator '<<' Expr '>>' if Expr ')'     { FoldWOp $3 $5 $8 }
+         | '(' foldwi Operator '<<' Expr '>>' if Expr ')'    { FoldWiOp $3 $5 $8 }
+
+
 
 Prefix : Path  { PrefixPath $1 }
        | '$_$' { PrefixBinOp (case $1 of { OpPlus -> BinPlus ; OpMinus -> BinMinus ; OpTimes -> BinTimes ; OpDiv -> BinDiv ; OpAnd -> BinAnd ; OpOr -> BinOr ; OpLessEq ->  BinLessEq }) }
