@@ -72,7 +72,7 @@ prettyExpr :: Int -> Expr -> Doc
 prettyExpr _ (IdExpr path) = prettyPath path
 prettyExpr _ (ConstIntExpr n) = integer n
 prettyExpr _ (ConstBoolExpr n) = if n then text "true" else text "false"
-prettyExpr p (IfExpr e1 e2 e3) = precedence 14 p $ 
+prettyExpr p (IfExpr e1 e2 e3) = precedence 14 p $
                                  text "if" <+> prettyExpr 14 e1 <+>
                                  text "then" <+> prettyExpr 14 e2 <+>
                                  text "else" <+> prettyExpr 14 e3
@@ -92,6 +92,8 @@ prettyExpr _ (FBYExpr e1 e2 e3) = text "fby" <> (parens $
                                   prettyExpr 15 e2 <>
                                   text ";" <+>
                                   commaList (map (prettyExpr 15) e3))
+prettyExpr p (IndexExpr e i) = (parens $ prettyExpr p e) <+>
+                                      (brackets $ prettyExpr p i)
 prettyExpr _ _ = text "<expr>"
 
 prettyOperator :: Operator -> Doc
