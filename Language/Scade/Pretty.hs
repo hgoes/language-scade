@@ -189,14 +189,14 @@ prettyTransitions :: [Transition] -> Doc
 prettyTransitions = vcat.fmap prettyTransition
 
 prettyTransition :: Transition -> Doc
-prettyTransition (Transition cond acts fork) = text "if" <+> prettyExpr 0 cond <+>
-                                               (case acts of
+prettyTransition (Transition cond acts fork) = text "if" <+> prettyExpr 0 cond <+> (prettyFork fork) <> semi $+$
+                                                  (case acts of
                                                    Just racts -> prettyActions racts
-                                                   Nothing -> empty) <+>
-                                               (prettyFork fork) <> semi
+                                                   Nothing -> empty)
 
 prettyActions :: Actions -> Doc
-prettyActions _ = text "<actions>"
+prettyActions (ActionEmission _) = text "<emissions>"
+prettyActions (ActionDef dataDef) = prettyDataDef dataDef
 
 prettyFork :: Fork -> Doc
 prettyFork (TargetFork tp trg) = (case tp of
