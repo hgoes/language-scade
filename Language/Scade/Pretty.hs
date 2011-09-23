@@ -48,10 +48,17 @@ prettySizeDecl :: SizeDecl -> Doc
 prettySizeDecl (SizeDecl names) = text "<<" <> hsep (punctuate (text ",") (map text names)) <> text ">>"
 
 prettyVarDecl :: VarDecl -> Doc
-prettyVarDecl vdecl = names <+> text ":" <+> tp
+prettyVarDecl vdecl = names <+> text ":" <+> tp <+> def <+> last
   where
     names = hsep $ punctuate (text ",") $ map prettyVarId (varNames vdecl)
     tp = prettyTypeExpr $ varType vdecl
+    def = case varDefault vdecl of
+      Nothing -> empty
+      Just expr -> text "default = " <+> prettyExpr 0 expr
+    last = case varLast vdecl of
+      Nothing -> empty
+      Just expr -> text "last = " <+> prettyExpr 0 expr
+    
 
 prettyVarId :: VarId -> Doc
 prettyVarId vid = (if is_clock vid then text "clock" else empty)
@@ -70,6 +77,7 @@ prettyTypeExpr (TypeRecord xs) = braces $ commaList $ map (\(n,tp) -> text n <> 
 
 prettyExpr :: Int -> Expr -> Doc
 prettyExpr _ (IdExpr path) = prettyPath path
+prettyExpr _ (LastExpr name) = text "last '" <> text name
 prettyExpr _ (ConstIntExpr n) = integer n
 prettyExpr _ (ConstBoolExpr n) = if n then text "true" else text "false"
 prettyExpr p (IfExpr e1 e2 e3) = precedence 14 p $
@@ -189,14 +197,14 @@ prettyTransitions :: [Transition] -> Doc
 prettyTransitions = vcat.fmap prettyTransition
 
 prettyTransition :: Transition -> Doc
-prettyTransition (Transition cond acts fork) = text "if" <+> prettyExpr 0 cond <+> (prettyFork fork) <> semi $+$
-                                                  (case acts of
-                                                   Just racts -> prettyActions racts
-                                                   Nothing -> empty)
+prettyTransition (Transition cond acts fork) = text "if" <+> prettyExpr 0 cond <+> (case acts of
+                                                                                       Just racts -> prettyActions racts
+                                                                                       Nothing -> empty) <+> (prettyFork fork) <> semi
+                                                  
 
 prettyActions :: Actions -> Doc
 prettyActions (ActionEmission _) = text "<emissions>"
-prettyActions (ActionDef dataDef) = prettyDataDef dataDef
+prettyActions (ActionDef dataDef) = text "do" <+> prettyDataDef dataDef
 
 prettyFork :: Fork -> Doc
 prettyFork (TargetFork tp trg) = (case tp of
