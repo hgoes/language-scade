@@ -18,6 +18,7 @@ tokens :-
   "/*" ([\x00-\xff] # \* | \* [\x00-\xff] # \/)* "*/"  ;
   "#pragma" ([\x00-\xff] # \#)* "#end"                 ;
   "#" (. # \ )+                                        ;
+  "--" .*                                              ;
   abstract                                             { key KeyAbstract }
   activate                                             { key KeyActivate }
   and                                                  { key KeyAnd }
