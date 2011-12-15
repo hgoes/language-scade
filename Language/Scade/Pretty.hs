@@ -102,6 +102,7 @@ prettyExpr _ (FBYExpr e1 e2 e3) = text "fby" <> (parens $
                                   commaList (map (prettyExpr 15) e3))
 prettyExpr p (IndexExpr e i) = (parens $ prettyExpr p e) <+>
                                       (brackets $ prettyExpr p i)
+prettyExpr p (ArrayExpr exprs) = brackets $ commaList $ fmap (prettyExpr 0) exprs
 prettyExpr _ _ = text "<expr>"
 
 prettyOperator :: Operator -> Doc
