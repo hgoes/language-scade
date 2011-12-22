@@ -160,24 +160,21 @@ fby(p,q) : p q { $1 }
 Declarations : many(Declaration) { $1 }
 
 Declaration : open Path ';'                  { OpenDecl $2 }
-            | type TypeDecls                 { TypeBlock $2 }
+            | type many(fby(TypeDecl,';'))   { TypeBlock $2 }
             | const many(fby(ConstDecl,';')) { ConstBlock $2 }
             | PackageDecl                    { $1 }
             | UserOpDeclaration              { $1 }
 
-TypeDecls : InterfaceStatus id TypeDefOpt ';' TypeDecls { (TypeDecl $1 $2 $3):$5 }
-          |                                             { [] }
+TypeDecl : InterfaceStatus id maybe(TypeDef) { TypeDecl $1 $2 $3 }
 
-TypeDefOpt : '=' TypeExpr                  { Just $2 }
-           | '=' enum '{' list(id,',') '}' { Just (TypeEnum $4) }
-           |                               { Nothing }
+TypeDef : '=' TypeExpr                  { $2 }
+        | '=' enum '{' list(id,',') '}' { TypeEnum $4 }
 
-ConstDecl : InterfaceStatus id ':' TypeExpr OptConstInit { ConstDecl $1 $2 $4 $5 }
+ConstDecl : InterfaceStatus id ':' TypeExpr maybe(ConstInit) { ConstDecl $1 $2 $4 $5 }
 
-OptConstInit : '=' Expr { Just $2 }
-             |          { Nothing }
+ConstInit : '=' Expr { $2 }
 
-UserOpDeclaration : OpKind bool(imported) InterfaceStatus id SizeDecl 
+UserOpDeclaration : OpKind bool(imported) InterfaceStatus id maybe(SizeDecl)
                     '(' list(VarDecl,';') ')' returns '(' list(VarDecl,';') ')'
                     WhereDecl
                     OptBody
@@ -190,7 +187,7 @@ OptBody : ';'                                             { DataDef [] [] [] }
 WhereDecl : where list1(name,',') numeric { $2 }
           |                               { [] }
 
-PackageDecl : package Visibility id Declarations end ';' { PackageDecl $2 $3 $4 }
+PackageDecl : package maybe(Visibility) id Declarations end ';' { PackageDecl $2 $3 $4 }
 
 DataDef : Equation ';'                          { DataDef [] [] [$1] }
         | SignalBlock LocalBlockOpt LetBlockOpt { DataDef $1 $2 $3 }
@@ -206,25 +203,21 @@ LetBlockOpt : LetBlock { $1 }
 OpKind : function { Function }
        | node     { Node }
 
-InterfaceStatus : Visibility          { InterfaceStatus $1 False }
-                | Visibility external { InterfaceStatus $1 True }
+InterfaceStatus : maybe(Visibility)          { InterfaceStatus $1 False }
+                | maybe(Visibility) external { InterfaceStatus $1 True }
 
-Visibility : private { Just Private }
-           | public  { Just Public }
-           |         { Nothing }
+Visibility : private { Private }
+           | public  { Public }
 
-SizeDecl : '<<' list(id,',') '>>' { Just $ SizeDecl $2 }
-         |                        { Nothing }
+SizeDecl : '<<' list(id,',') '>>' { SizeDecl $2 }
 
-VarDecl : list1(VarId,',') ':' TypeExpr DefaultDecl LastDecl { VarDecl $1 $3 $4 $5 }
+VarDecl : list1(VarId,',') ':' TypeExpr maybe(DefaultDecl) maybe(LastDecl) { VarDecl $1 $3 $4 $5 }
 
 VarId : bool(clock) bool(probe) id { VarId $3 $1 $2 }
 
-DefaultDecl : default '=' Expr { Just $3 }
-            |                  { Nothing }
+DefaultDecl : default '=' Expr { $3 }
 
-LastDecl : last '=' Expr { Just $3 }
-         |               { Nothing }
+LastDecl : last '=' Expr { $3 }
 
 TypeExpr : bool                        { TypeBool }
          | int                         { TypeInt }
@@ -343,11 +336,10 @@ Iterator : mapfold { ItMapFold }
 
 StateMachine : automaton maybe(id) many1(StateDecl) { StateMachine $2 $3 }
 
-EmissionBody : name PostfixIfExpr                    { EmissionBody [$1] $2 }
-             | '(' list1(name,',') ')' PostfixIfExpr { EmissionBody $2 $4 }
+EmissionBody : name maybe(PostfixIfExpr)                    { EmissionBody [$1] $2 }
+             | '(' list1(name,',') ')' maybe(PostfixIfExpr) { EmissionBody $2 $4 }
 
-PostfixIfExpr : if Expr { Just $2 }
-              |         { Nothing}
+PostfixIfExpr : if Expr { $2 }
 
 Actions : do '{' list1(ActionBody,';') '}' { ActionEmission $3 }
         | do DataDef                       { ActionDef $2 }
@@ -373,11 +365,10 @@ StateDecl : bool(initial) bool(final) state id StateUnless DataDef StateUntil { 
 StateUnless : unless many1(fby(Transition,';')) { $2 }
             |                                   { [] }
 
-StateUntil : until many(fby(Transition,';')) StateSynchro { ($2,$3) }
-           |                                              { ([],Nothing) }
+StateUntil : until many(fby(Transition,';')) maybe(StateSynchro) { ($2,$3) }
+           |                                                     { ([],Nothing) }
 
-StateSynchro : synchro maybe(Actions) Fork ';' { Just ($2,$3) }
-             |                                 { Nothing }
+StateSynchro : synchro maybe(Actions) Fork ';' { ($2,$3) }
 
 Return : returns ReturnIds { $2 }
 
