@@ -1,2 +1,5 @@
 This is a SCADE parser and pretty printing library written in Haskell.
 SCADE is a modeling language used in the SCADE Suite by Esterel.
+
+Warning: Compiling the parser takes an awful lot of time on some GHC
+versions. Expect 15 min+.
