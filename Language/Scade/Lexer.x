@@ -36,6 +36,7 @@ tokens :-
   emit                                                 { key KeyEmit }
   every                                                { key KeyEvery }
   fby                                                  { key KeyFBY }
+  false                                                { key KeyFalse }
   flatten                                              { key KeyFlatten }
   fold                                                 { key KeyFold }
   foldi                                                { key KeyFoldi }
