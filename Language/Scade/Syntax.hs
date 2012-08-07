@@ -1,4 +1,8 @@
+{-# LANGUAGE DeriveDataTypeable #-}
 module Language.Scade.Syntax where
+
+import Data.Data
+import Data.Typeable
 
 data Declaration = OpenDecl Path
                  | TypeBlock [TypeDecl]
@@ -15,28 +19,28 @@ data Declaration = OpenDecl Path
                    , userOpContent :: DataDef
                    }
                  | ConstBlock [ConstDecl]
-                 deriving Show
+                 deriving (Show, Data, Typeable)
 
 data UserOpKind = Function
                 | Node
-                deriving Show
+                deriving (Show, Data, Typeable)
 
 data ConstDecl = ConstDecl InterfaceStatus String TypeExpr (Maybe Expr)
-               deriving Show
+               deriving (Show, Data, Typeable)
 
 data TypeDecl = TypeDecl InterfaceStatus String (Maybe TypeExpr)
-              deriving Show
+              deriving (Show, Data, Typeable)
 
 data InterfaceStatus = InterfaceStatus
                        { visibility :: Maybe Visibility
                        , external :: Bool
-                       } deriving Show
+                       } deriving (Show, Data, Typeable)
 
 data Visibility = Private
                 | Public
-                deriving Show
+                deriving (Show, Data, Typeable)
 
-newtype SizeDecl = SizeDecl [String] deriving Show
+newtype SizeDecl = SizeDecl [String] deriving (Show, Data, Typeable)
 
 data VarDecl = VarDecl
                  { varNames :: [VarId]
@@ -44,13 +48,13 @@ data VarDecl = VarDecl
                  , varDefault :: Maybe Expr
                  , varLast :: Maybe Expr
                  }
-             deriving (Show,Eq)
+             deriving (Show,Eq,Data,Typeable)
 
 data VarId = VarId
              { name :: String
              , is_clock :: Bool
              , is_probe :: Bool
-             } deriving (Show,Eq)
+             } deriving (Show,Eq,Data,Typeable)
 
 data TypeExpr = TypeBool
               | TypeInt
@@ -61,32 +65,32 @@ data TypeExpr = TypeBool
               | TypeVar String
               | TypeRecord [(String,TypeExpr)]
               | TypeEnum [String]
-              deriving (Show,Eq) -- missing: a whole shitload
+              deriving (Show,Eq,Data,Typeable) -- missing: a whole shitload
 
 data DataDef = DataDef
                { dataSignals :: [String]
                , dataLocals :: [VarDecl]
                , dataEquations :: [Equation]
-               } deriving (Show,Eq)
+               } deriving (Show,Eq,Data,Typeable)
 
 data Equation = SimpleEquation [LHSId] Expr
               | AssertEquation AssertType String Expr
               | EmitEquation EmissionBody
               | StateEquation StateMachine [String] Bool
               | ClockedEquation (Maybe String) (Either IfBlock MatchBlock) [String] Bool
-              deriving (Show,Eq)
+              deriving (Show,Eq,Data,Typeable)
 
 data IfBlock = IfBlock Expr (Either DataDef IfBlock) (Either DataDef IfBlock)
-             deriving (Show,Eq)
+             deriving (Show,Eq,Data,Typeable)
 
 data MatchBlock = MatchBlock Expr [(Pattern,DataDef)]
-                deriving (Show,Eq)
+                deriving (Show,Eq,Data,Typeable)
 
 data LHSId = Named String
            | Bottom
-           deriving (Show,Eq)
+           deriving (Show,Eq,Data,Typeable)
 
-newtype Path = Path [String] deriving (Show,Eq)
+newtype Path = Path [String] deriving (Show,Eq,Ord,Data,Typeable)
 
 data Expr = IdExpr Path
           | NameExpr String
@@ -110,19 +114,19 @@ data Expr = IdExpr Path
           | AppendExpr Expr Expr
           | TransposeExpr Expr Integer Integer
           | TimesExpr Expr Expr
-          deriving (Show,Eq)
+          deriving (Show,Eq,Data,Typeable)
 
 data ActivateCondition = ActivateClock ClockExpr
                        | ActivateDefault Expr Expr
                        | ActivateInitialDefault Expr Expr
-                       deriving (Show,Eq)
+                       deriving (Show,Eq,Data,Typeable)
 
 data UnaryOp = UnNot
              | UnPre
              | UnNeg
              | UnCastInt
              | UnCastReal
-             deriving (Show,Eq)
+             deriving (Show,Eq,Data,Typeable)
 
 data BinOp = BinPlus
            | BinMinus
@@ -141,7 +145,7 @@ data BinOp = BinPlus
            | BinOr
            | BinXor
            | BinPower
-           deriving (Show,Eq)
+           deriving (Show,Eq,Data,Typeable)
 
 data Operator = PrefixOp Prefix
               | PrefixParamOp Prefix [Expr]
@@ -154,20 +158,20 @@ data Operator = PrefixOp Prefix
               | MapWiOp Operator Expr Expr Expr
               | FoldWOp Operator Expr Expr
               | FoldWiOp Operator Expr Expr
-              deriving (Show,Eq)
+              deriving (Show,Eq,Data,Typeable)
 
 data Prefix = PrefixPath Path
             | PrefixBinOp BinOp
-            deriving (Show,Eq)
+            deriving (Show,Eq,Data,Typeable)
 
 data Iterator = ItMap
               | ItFold
               | ItMapFold
               | ItMapI
               | ItFoldI
-              deriving (Show,Eq)
+              deriving (Show,Eq,Data,Typeable)
 
-data StateMachine = StateMachine (Maybe String) [State] deriving (Show,Eq)
+data StateMachine = StateMachine (Maybe String) [State] deriving (Show,Eq,Data,Typeable)
 
 data State = State
              { stateInitial :: Bool
@@ -177,36 +181,36 @@ data State = State
              , stateUnless :: [Transition]
              , stateUntil :: [Transition]
              , stateSynchro :: Maybe (Maybe Actions,Fork)
-             } deriving (Show,Eq)
+             } deriving (Show,Eq,Data,Typeable)
 
-data Transition = Transition Expr (Maybe Actions) Fork deriving (Show,Eq)
+data Transition = Transition Expr (Maybe Actions) Fork deriving (Show,Eq,Data,Typeable)
 
-data EmissionBody = EmissionBody [String] (Maybe Expr) deriving (Show,Eq)
+data EmissionBody = EmissionBody [String] (Maybe Expr) deriving (Show,Eq,Data,Typeable)
 
 data Actions = ActionEmission [(Bool,EmissionBody)]
              | ActionDef DataDef
-             deriving (Show,Eq)
+             deriving (Show,Eq,Data,Typeable)
 
 data Fork = TargetFork TargetType String
           | ConditionalFork [(Expr,Maybe Actions,Fork)] (Maybe (Maybe Actions,Fork))
-          deriving (Show,Eq)
+          deriving (Show,Eq,Data,Typeable)
 
 data TargetType = Restart
                 | Resume
-                deriving (Show,Eq)
+                deriving (Show,Eq,Data,Typeable)
 
 data ClockExpr = ClockId String
                | ClockNotId String
                | ClockMatch String Pattern 
-               deriving (Show,Eq)
+               deriving (Show,Eq,Data,Typeable)
 
 data Pattern = PatPath Path
              | PatChar Char
              | PatInt Integer
              | PatBool Bool
              | PatBottom
-             deriving (Show,Eq)
+             deriving (Show,Eq,Data,Typeable)
 
 data AssertType = Assume
                 | Guarantee
-                deriving (Show,Eq)
+                deriving (Show,Eq,Data,Typeable)
