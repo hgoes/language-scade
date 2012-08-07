@@ -120,19 +120,22 @@ import Language.Scade.Syntax
   const_float  { ConstFloat $$ }
   '_'          { Identifier "_" }
 
+%right times
 %left ';' ','
 %left else then
 %left '->'
+%left or xor
+%left and
 %left '=' '<>' '<' '>' '<=' '>='
-%left and or xor
-%left not
-%left pre times
 %left '+' '-'
 %left '*' '/' mod div
-%left '@'
+%left pre
 %left reverse transpose int real
+%left when
+%left not
 %left '^'
-%left '['
+%left '@'
+%left '.' '['
 
 %%
 
